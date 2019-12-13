@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var canvas_1 = require("canvas");
 var fs_1 = require("fs");
+var rnd = require("random");
 function ArrayToPoints(arr) {
     var res = [];
     for (var i = 0; i < arr.length - 2; i += 2) {
@@ -10,6 +11,7 @@ function ArrayToPoints(arr) {
     }
     return res;
 }
+exports.ArrayToPoints = ArrayToPoints;
 function PointsToArray(arr) {
     var res = [];
     for (var i = 0; i < arr.length; i++) {
@@ -17,6 +19,13 @@ function PointsToArray(arr) {
         res.push(arr[i].y);
     }
     return res;
+}
+exports.PointsToArray = PointsToArray;
+function randInt(min, max) {
+    return Math.floor((Math.random() * max) + min);
+}
+function randFloat(min, max) {
+    return Math.random() * max + min;
 }
 /**
  * IImage is used to create a new image
@@ -65,8 +74,9 @@ function drawLine(II, A, B, T, C) {
     II.ctx.lineTo(B.x, B.y);
     var a = 1;
     for (var i = 0; i < T; i++) {
-        II.ctx.moveTo(A.x + i * a, A.y + i * a);
-        II.ctx.lineTo(A.x + i * a, A.y + i * a);
+        var thicc = i * a;
+        II.ctx.moveTo(A.x - thicc, A.y + thicc);
+        II.ctx.lineTo(B.x - thicc, B.y + thicc);
         a *= -1;
     }
     II.ctx.stroke();
@@ -79,8 +89,9 @@ exports.drawLine = drawLine;
  * @param T thickness
  * @param C colour
  */
-function drawLineBetweenPoints(II, points, T, C) {
+function drawLineBetweenPoints(II, points, T, C, loop) {
     if (C === void 0) { C = II.color; }
+    if (loop === void 0) { loop = false; }
     if (points.length < 1) {
         console.log('Unable to draw, not enough points');
         return false;
@@ -99,6 +110,9 @@ function drawLineBetweenPoints(II, points, T, C) {
             console.log;
         }
         flipper *= -1;
+        if (loop) {
+            II.ctx.lineTo(a.x - thicc, a.y + thicc);
+        }
         II.ctx.stroke();
     }
 }
@@ -206,3 +220,96 @@ function getCurvePoints(pts, tension, isClosed, numOfSegments) {
     }
     return res;
 }
+exports.getCurvePoints = getCurvePoints;
+function drawMarker(II, p, size, C) {
+    if (C === void 0) { C = II.color; }
+    II.ctx.strokeStyle = C;
+    II.ctx.strokeRect(p.x - size / 2, p.y - size / 2, size, size);
+}
+exports.drawMarker = drawMarker;
+function fillPath(II, points) {
+    II.ctx.beginPath();
+    II.ctx.moveTo(points[0].x, points[0].y);
+    for (var i = 1; i < points.length; i++) {
+        var p = points[i];
+        II.ctx.lineTo(p.x, p.y);
+    }
+    II.ctx.closePath();
+    II.ctx.fill();
+}
+exports.fillPath = fillPath;
+/**
+ *
+ * @param II
+ * @param points
+ * @param thickness
+ * @param skippyCoff
+ * @param lineCoff a number between 0-1
+ * @param C
+ */
+function sketchyLines(II, points, thickness, skippyCoff, lineCoff, SD, C, rndOffset, loop) {
+    if (SD === void 0) { SD = 6; }
+    if (C === void 0) { C = II.color; }
+    if (loop === void 0) { loop = true; }
+    II.ctx.strokeStyle = C;
+    var numOfPoints = points.length;
+    for (var i = 0; i < numOfPoints; i++) {
+        var roll = Math.random();
+        if (lineCoff >= roll) { //draws line if roll was high enough
+            var max = numOfPoints - 1 - i;
+            if (max > 0) {
+                var a = numOfPoints / skippyCoff;
+                var skip = rnd.normal(a, SD);
+                var b = Math.round(skip());
+                if (b > max) {
+                    //console.log(max, i, b)
+                    if (loop) {
+                        var dif = b - max;
+                        console.log(dif);
+                        for (var q = 0; q < dif; q++) {
+                            points.push(points[q]);
+                        }
+                    }
+                    else {
+                        b = max;
+                    }
+                }
+                if (b < 1) {
+                    b = 0;
+                }
+                var c = b + i;
+                var rndO = rnd.normal(0, rndOffset);
+                var p1 = points[i];
+                var p1Offset = [rndO(), rndO()];
+                p1.x += p1Offset[0];
+                p1.y += p1Offset[1];
+                var p2 = points[c];
+                var p2Offset = [rndO(), rndO()];
+                p2.x += p2Offset[0];
+                p2.y += p2Offset[1];
+                var interpPoints = [];
+                interpPoints.push(p1);
+                for (var x = i; x < c; x++) {
+                    // x - i loop index 
+                    var pp = points[x];
+                    var index = x - i;
+                    pp.x += (b - index) / b * p1Offset[0] + (index) / b * p2Offset[0];
+                    pp.y += (b - index) / b * p1Offset[1] + (index) / b * p2Offset[1];
+                    interpPoints.push(pp);
+                }
+                interpPoints.push(p2);
+                //II.ctx.lineWidth = thickness;
+                drawLineBetweenPoints(II, interpPoints, thickness, C);
+                //drawLine(II, p1, p2, thickness, C);
+            }
+        }
+    }
+}
+exports.sketchyLines = sketchyLines;
+function addToPoints(points, x, y) {
+    for (var i = 0; i < points.length; i++) {
+        points[i].x += x;
+        points[i].y += y;
+    }
+}
+exports.addToPoints = addToPoints;

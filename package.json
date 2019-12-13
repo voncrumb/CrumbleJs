@@ -21,9 +21,11 @@
   },
   "homepage": "https://github.com/voncrumb/CuteAnimeGirlBreeding#readme",
   "dependencies": {
+    "@types/random": "^2.1.0",
     "canvas": "^2.6.0",
     "fs": "0.0.1-security",
     "paper": "^0.12.3",
+    "random": "^2.1.1",
     "typescript": "^3.7.3"
   },
   "devDependencies": {
