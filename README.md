@@ -22,3 +22,8 @@ crumble.drawLine(points, 5, "black")
 2. "Stroke" like line connection
 3. Add functionality for above usage
 
+## examples
+plz ignore bad design (I got a C+ in Art in grade 8)
+
+![ahh](https://i.imgur.com/zQmnJre.png)
+![ahh2](https://media.discordapp.net/attachments/648419035452669962/654579572398096407/unknown.png)
